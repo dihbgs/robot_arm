@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LEGO Controller</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #01152c;
+      color: #fff;
+      font-family: Arial, sans-serif;
+    }
+
+    .controller {
+      display: grid;
+      grid-template-columns: 128px 128px 128px;
+      grid-template-rows: 128px 128px 128px;
+      gap: 12px;
+    }
+
+    .key {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      border: 4px solid #0169cd;
+      border-radius: 14px;
+
+      background: #e8e8e8;
+      color: #0169cd;
+
+      cursor: pointer;
+      user-select: none;
+
+      transition: all 0.2s ease;
+    }
+
+    .key:hover {
+      background: white;
+    }
+
+    .key.pressed {
+      background: #0169cd;
+      color: #d6e3ff;
+      transform: scale(0.92);
+      box-shadow: 0 0 20px rgba(2, 89, 170, 0.6);
+      border: 4px solid #d6e3ff;
+    }
+
+    .arrow-up,
+    .arrow-down {
+      width: 0;
+      height: 0;
+      border-left: 20px solid transparent;
+      border-right: 20px solid transparent;
+    }
+
+    .arrow-up {
+      border-bottom: 30px solid #0169cd;
+    }
+
+    .arrow-down {
+      border-top: 30px solid #0169cd;
+    }
+
+    .arrow-left,
+    .arrow-right {
+      width: 0;
+      height: 0;
+      border-top: 20px solid transparent;
+      border-bottom: 20px solid transparent;
+    }
+
+    .arrow-left {
+      border-right: 30px solid #0169cd;
+      ;
+    }
+
+    .arrow-right {
+      border-left: 30px solid #0169cd;
+      ;
+    }
+
+    .key.pressed .arrow-up {
+      border-bottom-color: #d6e3ff;
+    }
+
+    .key.pressed .arrow-down {
+      border-top-color: #d6e3ff;
+    }
+
+    .key.pressed .arrow-left {
+      border-right-color: #d6e3ff;
+    }
+
+    .key.pressed .arrow-right {
+      border-left-color: #d6e3ff;
+    }
+
+    #up {
+      grid-column: 2;
+      grid-row: 1;
+    }
+
+    #left {
+      grid-column: 1;
+      grid-row: 2;
+    }
+
+    #center {
+      grid-column: 2;
+      grid-row: 2;
+
+      border-radius: 8%;
+      font-weight: bold;
+      font-size: 16px;
+    }
+
+    #right {
+      grid-column: 3;
+      grid-row: 2;
+    }
+
+    #down {
+      grid-column: 2;
+      grid-row: 3;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="controller">
+    <button class="key" id="up" data-key="ArrowUp" aria-label="Up">
+      <span class="arrow-up"></span>
+    </button>
+
+    <button class="key" id="left" data-key="ArrowLeft" aria-label="Left">
+      <span class="arrow-left"></span>
+    </button>
+
+    <button class="key" id="center" data-key=" " aria-label="Space">
+      ESPAÇO
+    </button>
+
+    <button class="key" id="right" data-key="ArrowRight" aria-label="Right">
+      <span class="arrow-right"></span>
+    </button>
+
+    <button class="key" id="down" data-key="ArrowDown" aria-label="Down">
+      <span class="arrow-down"></span>
+    </button>
+  </div>
+
+  <script>
+    const buttons = document.querySelectorAll(".key");
+
+    const SERVER = "/key";
+
+    function sendKey(key, pressed) {
+      fetch(SERVER, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          key: key,
+          pressed: pressed
+        })
+      }).catch(error => {
+        console.error("Could not reach server:", error);
+      });
+    }
+
+    function setButtonState(key, pressed) {
+      buttons.forEach(button => {
+        if (button.dataset.key === key) {
+          button.classList.toggle("pressed", pressed);
+        }
+      });
+    }
+
+    document.addEventListener("keydown", event => {
+      let key = event.key;
+
+      if (
+        key === 'p' ||
+        key === "ArrowUp" ||
+        key === "ArrowDown" ||
+        key === "ArrowLeft" ||
+        key === "ArrowRight" ||
+        key === " "
+      ) {
+        event.preventDefault();
+
+        if (!event.repeat) {
+          setButtonState(key, true);
+          sendKey(key, true);
+        }
+      }
+    });
+
+    document.addEventListener("keyup", event => {
+      let key = event.key;
+
+      if (
+        key === 'p' ||
+        key === "ArrowUp" ||
+        key === "ArrowDown" ||
+        key === "ArrowLeft" ||
+        key === "ArrowRight" ||
+        key === " "
+      ) {
+        event.preventDefault();
+
+        setButtonState(key, false);
+        sendKey(key, false);
+      }
+    });
+
+    buttons.forEach(button => {
+      const key = button.dataset.key;
+
+      button.addEventListener("mousedown", event => {
+        event.preventDefault();
+
+        button.classList.add("pressed");
+        sendKey(key, true);
+      });
+
+      button.addEventListener("mouseup", event => {
+        event.preventDefault();
+
+        button.classList.remove("pressed");
+        sendKey(key, false);
+      });
+
+      button.addEventListener("mouseleave", () => {
+        if (button.classList.contains("pressed")) {
+          button.classList.remove("pressed");
+          sendKey(key, false);
+        }
+      });
+
+      button.addEventListener("touchstart", event => {
+        event.preventDefault();
+
+        button.classList.add("pressed");
+        sendKey(key, true);
+      });
+
+      button.addEventListener("touchend", event => {
+        event.preventDefault();
+
+        button.classList.remove("pressed");
+        sendKey(key, false);
+      });
+    });
+  </script>
+
+</body>
+
+</html>
