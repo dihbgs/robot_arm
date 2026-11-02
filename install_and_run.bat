@@ -53,9 +53,21 @@ if errorlevel 1 (
 )
 
 echo.
+echo Verifying libusb backend...
+
+".venv\Scripts\python.exe" -c "import usb.core; import usb.backend.libusb1; import libusb_package; backend = usb.backend.libusb1.get_backend(find_library=libusb_package.find_library); print('SUCCESS: libusb backend loaded!' if backend else 'ERROR: libusb backend not found.'); exit(0 if backend else 1)"
+
+if errorlevel 1 (
+    echo.
+    echo Installation verification failed.
+    pause
+    exit /b 1
+)
+
+echo.
 echo Installation complete!
 echo Stating controller...
 
-".venv\Scripts\python.exe" test.py
+".venv\Scripts\python.exe" server.py
 
 pause

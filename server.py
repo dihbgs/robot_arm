@@ -4,6 +4,16 @@ from time import monotonic, sleep
 
 import ev3_dc as ev3
 from flask import Flask, request, send_from_directory
+import usb.core
+import usb.backend.libusb1
+import libusb_package
+
+backend = usb.backend.libusb1.get_backend(
+    find_library=libusb_package.find_library
+)
+
+if backend is None:
+    raise RuntimeError("Could not initialize libusb backend!")
 
 
 app = Flask(__name__)
